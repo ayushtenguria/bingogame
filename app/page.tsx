@@ -3,14 +3,28 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 
+// Utility function to shuffle an array
+const shuffleArray = (array: number[]) => {
+  return array
+    .map((value) => ({ value, sort: Math.random() })) // Attach random sort keys
+    .sort((a, b) => a.sort - b.sort) // Sort by the random keys
+    .map(({ value }) => value); // Extract the original values
+};
+
 export default function Home() {
   const [numbers, setNumbers] = useState<{ [key: number]: boolean }>({});
+  const [shuffledNumbers, setShuffledNumbers] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchNumbers = async () => {
       const response = await fetch('/api/numbers');
       const data = await response.json();
-      setNumbers(data);
+      console.log('Initial Numbers:', data); // Debugging
+      setNumbers(data.revealedNumbers);
+
+      // Generate and shuffle the numbers array
+      const shuffled = shuffleArray(Array.from({ length: 90 }, (_, i) => i + 1));
+      setShuffledNumbers(shuffled);
     };
 
     fetchNumbers();
@@ -33,7 +47,7 @@ export default function Home() {
     return () => eventSource.close();
   }, []);
 
-  if (Object.keys(numbers).length === 0) {
+  if (shuffledNumbers.length === 0) {
     return <div>Loading Bingo Board...</div>;
   }
 
@@ -41,7 +55,7 @@ export default function Home() {
     <div className="container mx-auto p-8">
       <h1 className="text-4xl font-bold text-center mb-8">Bingo Board</h1>
       <div className="grid grid-cols-10 gap-2">
-        {Array.from({ length: 90 }, (_, i) => i + 1).map((number) => (
+        {shuffledNumbers.map((number) => (
           <Card 
             key={number}
             className={`p-4 text-center font-bold text-xl cursor-pointer transition-all duration-300 ${
