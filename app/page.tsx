@@ -12,18 +12,30 @@ export default function Home() {
       const data = await response.json();
       setNumbers(data);
     };
-    
+
     fetchNumbers();
-    
-    // Set up SSE for real-time updates
+
     const eventSource = new EventSource('/api/numbers/stream');
+
     eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setNumbers(data);
+      const updatedNumber = JSON.parse(event.data);
+      setNumbers((prevNumbers) => ({
+        ...prevNumbers,
+        ...updatedNumber,
+      }));
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
     };
 
     return () => eventSource.close();
   }, []);
+
+  if (Object.keys(numbers).length === 0) {
+    return <div>Loading Bingo Board...</div>;
+  }
 
   return (
     <div className="container mx-auto p-8">
